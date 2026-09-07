@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b6b3a" />
+  <meta name="description" content="Application mobile hors-ligne de recensement de la population du Secteur des Wanianga (Territoire de Walikale, Nord-Kivu)." />
+  <title>Recensement Secteur des Wanianga</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Icônes (vraies icônes, pas des emojis) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+
+<body>
+  <header class="barre-haut">
+    <div>
+      <h1>Recensement de la population</h1>
+      <p class="sous-titre">Secteur des Wanianga </p>
+    </div>
+    <span class="badge-hors-ligne" id="etat-reseau">hors-ligne</span>
+  </header>
+
+  <main id="contenu">
+    <!-- Accueil -->
+    <section class="vue" id="vue-accueil">
+      <div class="cartes-cle" id="resume-accueil"></div>
+      <div id="sync-accueil-info"></div>
+
+      <button class="bouton principal large" id="btn-nouveau" type="button">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        Nouveau ménage
+      </button>
+
+      <h2>Derniers ménages enregistrés</h2>
+      <div id="derniers-menages" class="liste"></div>
+    </section>
+
+    <!-- Liste des ménages -->
+    <section class="vue cachee" id="vue-liste">
+      <div class="filtres">
+        <input type="search" id="recherche" placeholder="Rechercher : nom, code, localité…" aria-label="Rechercher un ménage" />
+        <select id="filtre-groupement" aria-label="Filtrer par groupement"></select>
+      </div>
+      <p class="info" id="compteur-liste"></p>
+      <div id="liste-menages" class="liste"></div>
+    </section>
+
+    <!-- Formulaire ménage -->
+    <section class="vue cachee" id="vue-fiche">
+      <form id="formulaire-menage" novalidate>
+        <h2 id="titre-fiche">Nouvelle fiche de ménage</h2>
+        <p class="code-menage" id="affiche-code"></p>
+
+        <fieldset>
+          <legend>Localisation</legend>
+          <div id="champs-localisation"></div>
+
+          <button type="button" class="bouton secondaire" id="btn-gps">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+            Capturer les coordonnées GPS
+          </button>
+
+          <p class="info" id="info-gps"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Photo de la parcelle</legend>
+          <div id="zone-photo"></div>
+
+          <button type="button" class="bouton secondaire" id="btn-photo">
+            <i class="fa-solid fa-camera" aria-hidden="true"></i>
+            Prendre une photo de la parcelle
+          </button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Ménage</legend>
+          <div id="champs-menage"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Conditions de vie</legend>
+          <div id="champs-habitat"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            Membres du ménage <span class="puce" id="nb-membres">0</span>
+          </legend>
+
+          <div id="liste-membres"></div>
+
+          <button type="button" class="bouton secondaire" id="btn-ajouter-membre">
+            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+            Ajouter un membre
+          </button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Signature du chef de ménage</legend>
+          <div id="zone-signature"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Agent recenseur</legend>
+          <div id="champs-agent"></div>
+        </fieldset>
+
+        <div class="erreurs cachee" id="zone-erreurs" role="alert"></div>
+
+        <div class="actions-bas">
+          <button type="button" class="bouton fantome" id="btn-annuler">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            Annuler
+          </button>
+
+          <button type="submit" class="bouton principal">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Statistiques -->
+    <section class="vue cachee" id="vue-stats">
+      <h2>Statistiques du recensement</h2>
+      <div class="cartes-cle" id="stats-cles"></div>
+      <div id="stats-graphiques"></div>
+    </section>
+
+    <!-- Carte des ménages -->
+    <section class="vue cachee" id="vue-carte">
+      <h2>Carte des ménages géolocalisés</h2>
+      <div id="carte-container"></div>
+    </section>
+
+    <!-- Supervision -->
+    <section class="vue cachee" id="vue-supervision">
+      <div id="supervision-container"></div>
+    </section>
+
+    <!-- Synchronisation -->
+    <section class="vue cachee" id="vue-sync">
+      <h2>Synchronisation avec le serveur</h2>
+
+      <fieldset>
+        <legend>Configuration du serveur</legend>
+        <div id="champs-sync-config"></div>
+
+        <button type="button" class="bouton secondaire" id="btn-sauver-config-sync">
+          <i class="fa-solid fa-save" aria-hidden="true"></i>
+          Enregistrer la configuration
+        </button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Envoyer les données</legend>
+        <p class="info" id="info-sync-attente"></p>
+
+        <button type="button" class="bouton principal" id="btn-sync-manuel">
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+          Synchroniser maintenant
+        </button>
+
+        <p class="info" id="info-sync-resultat"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Dernière synchronisation</legend>
+        <p class="info" id="info-sync-derniere">Aucune synchronisation effectuée.</p>
+      </fieldset>
+    </section>
+
+    <!-- Données / paramètres -->
+    <section class="vue cachee" id="vue-donnees">
+      <h2>Données et paramètres</h2>
+
+      <fieldset>
+        <legend>Paramètres de l'agent</legend>
+        <div id="champs-parametres"></div>
+
+        <button type="button" class="bouton secondaire" id="btn-enregistrer-parametres">
+          <i class="fa-solid fa-gears" aria-hidden="true"></i>
+          Enregistrer les paramètres
+        </button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Exportation</legend>
+        <p class="info">Les fichiers exportés peuvent être transmis au bureau du Secteur par clé USB, Bluetooth ou courriel.</p>
+
+        <button type="button" class="bouton secondaire" id="btn-export-menages">
+          <i class="fa-solid fa-download" aria-hidden="true"></i>
+          Exporter les ménages (CSV)
+        </button>
+
+        <button type="button" class="bouton secondaire" id="btn-export-personnes">
+          <i class="fa-solid fa-download" aria-hidden="true"></i>
+          Exporter les personnes (CSV)
+        </button>
+
+        <button type="button" class="bouton secondaire" id="btn-export-json">
+          <i class="fa-solid fa-download" aria-hidden="true"></i>
+          Sauvegarde complète (JSON)
+        </button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Importation / fusion</legend>
+        <label class="etiquette" for="fichier-import">
+          <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i>
+          Fichier de sauvegarde JSON
+        </label>
+
+        <input type="file" id="fichier-import" accept=".json,application/json" />
+        <p class="info" id="info-import"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Zone sensible</legend>
+        <button type="button" class="bouton danger" id="btn-vider">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          Supprimer toutes les données locales
+        </button>
+      </fieldset>
+    </section>
+  </main>
+
+  <!-- Navigation -->
+  <nav class="barre-onglets" aria-label="Navigation principale">
+    <button class="onglet actif" data-vue="accueil" type="button">
+      <i class="fa-solid fa-house" aria-hidden="true"></i>
+      Accueil
+    </button>
+
+    <button class="onglet" data-vue="liste" type="button">
+      <i class="fa-solid fa-book" aria-hidden="true"></i>
+      Ménages
+    </button>
+
+    <button class="onglet" data-vue="fiche" type="button">
+      <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+      Saisir
+    </button>
+
+    <button class="onglet" data-vue="stats" type="button">
+      <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+      Stats
+    </button>
+
+    <button class="onglet" data-vue="carte" type="button">
+      <i class="fa-solid fa-map" aria-hidden="true"></i>
+      Carte
+    </button>
+
+    <button class="onglet" data-vue="supervision" type="button">
+      <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+      Superv.
+    </button>
+
+    <button class="onglet" data-vue="sync" type="button">
+      <i class="fa-solid fa-cloud" aria-hidden="true"></i>
+      Sync
+    </button>
+
+    <button class="onglet" data-vue="donnees" type="button">
+      <i class="fa-solid fa-gear" aria-hidden="true"></i>
+      Données
+    </button>
+  </nav>
+
+  <div class="notification cachee" id="notification" role="status"></div>
+
+  <script src="js/core.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/photo.js"></script>
+  <script src="js/signature.js"></script>
+  <script src="js/carte.js"></script>
+  <script src="js/supervision.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
